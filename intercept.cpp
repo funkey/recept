@@ -1,4 +1,8 @@
-#include <stdint.h>
+#include <cstdint>
+#include <array>
+#include <limits>
+
+#define RING_SIZE 16
 
 template<typename T, int Size>
 class ring {
@@ -7,10 +11,32 @@ public:
 
 	inline void add(const T& value) {
 
+		if (empty()) {
+
+			fill(value);
+			return;
+		}
+
 		_index = (_index + 1) % Size;
 		const T& oldest = _values[_index];
 		_sum = _sum + value - oldest;
 		_values[_index] = value;
+	}
+
+	inline void clear() {
+
+		_sum = std::numeric_limits<T>::max();
+	}
+
+	inline bool empty() {
+
+		return _sum == std::numeric_limits<T>::max();
+	}
+
+	inline void fill(const T& value) {
+
+		_values.fill(value);
+		_sum = value*Size;
 	}
 
 	inline T average() {
@@ -20,13 +46,13 @@ public:
 
 private:
 
-	T _values[Size];
+	std::array<T, Size> _values;
 	uint8_t _index;
 	T _sum;
 };
 
-static ring<uint32_t, 16> ring_x;
-static ring<uint32_t, 16> ring_y;
+static ring<uint32_t, RING_SIZE> ring_x;
+static ring<uint32_t, RING_SIZE> ring_y;
 
 void filter(char* buf) {
 
@@ -49,6 +75,13 @@ void filter(char* buf) {
 	// type == 3 && code == 25 -> value == distance
 	// type == 3 && code == 26 -> value == tilt x
 	// type == 3 && code == 27 -> value == tilt y
+
+	// pen in
+	if (type == 1 && code == 320 && value == 1) {
+
+		ring_x.clear();
+		ring_y.clear();
+	}
 
 	if (type == 3) {
 
