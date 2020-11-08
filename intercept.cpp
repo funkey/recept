@@ -1,36 +1,32 @@
-#define _GNU_SOURCE
-#include <stdio.h>
-#include <string.h>
 #include <stdint.h>
-#include <dlfcn.h>
 
-static int event_fd = 0;
+template<typename T, int Size>
+class ring {
 
-// size of the ring buffer
-#define N 16
+public:
 
-struct ring {
+	inline void add(const T& value) {
 
-	uint32_t values[N];
-	uint8_t index;
-	uint32_t sum;
+		_index = (_index + 1) % Size;
+		const T& oldest = _values[_index];
+		_sum = _sum + value - oldest;
+		_values[_index] = value;
+	}
+
+	inline T average() {
+
+		return _sum/Size;
+	}
+
+private:
+
+	T _values[Size];
+	uint8_t _index;
+	T _sum;
 };
 
-static struct ring ring_x = { {0}, 0, 0 };
-static struct ring ring_y = { {0}, 0, 0 };
-
-void ring_add(struct ring* ring, const uint32_t value) {
-
-	ring->index = (ring->index + 1) % N;
-	const uint32_t oldest = ring->values[ring->index];
-	ring->sum = ring->sum + value - oldest;
-	ring->values[ring->index] = value;
-}
-
-uint32_t ring_average(const struct ring* ring) {
-
-	return ring->sum/N;
-}
+static ring<uint32_t, 16> ring_x;
+static ring<uint32_t, 16> ring_y;
 
 void filter(char* buf) {
 
@@ -58,13 +54,13 @@ void filter(char* buf) {
 
 		if (code == 0) {
 
-			ring_add(&ring_x, value);
-			value = ring_average(&ring_x);
+			ring_x.add(value);
+			value = ring_x.average();
 
 		} else if (code == 1) {
 
-			ring_add(&ring_y, value);
-			value = ring_average(&ring_y);
+			ring_y.add(value);
+			value = ring_y.average();
 		}
 
 		// copy value back to buffer
@@ -75,11 +71,26 @@ void filter(char* buf) {
 	}
 }
 
+extern "C" {
+
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
+#include <stdio.h>
+#include <string.h>
+#include <dlfcn.h>
+
+typedef int (*t_open)(const char*, int);
+typedef ssize_t (*t_read)(int, void*, size_t);
+
+static int event_fd = 0;
+
 int open(const char* filename, int flags) {
 
-	static int (*real_open)(const char*, int) = NULL;
+	static t_open real_open = NULL;
 	if (!real_open)
-		real_open = dlsym(RTLD_NEXT, "open");
+		real_open = (t_open)dlsym(RTLD_NEXT, "open");
 
 	int fd = real_open(filename, flags);
 
@@ -95,14 +106,16 @@ int open(const char* filename, int flags) {
 
 ssize_t read(int fd, void* buf, size_t count) {
 
-	static ssize_t (*real_read)(int, void*, size_t) = NULL;
+	static t_read real_read = NULL;
 	if (!real_read)
-		real_read = dlsym(RTLD_NEXT, "read");
+		real_read = (t_read)dlsym(RTLD_NEXT, "read");
 
 	ssize_t ret = real_read(fd, buf, count);
 
 	if (fd != 0 && fd == event_fd && ret == 16)
-		filter(buf);
+		filter((char*)buf);
 
 	return ret;
+}
+
 }
