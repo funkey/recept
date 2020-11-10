@@ -28,9 +28,17 @@ public:
 		_sum = std::numeric_limits<T>::max();
 	}
 
-	inline bool empty() {
+	inline bool empty() const {
 
 		return _sum == std::numeric_limits<T>::max();
+	}
+
+	/**
+	 * Return the last (i.e., newest) item added to the ring.
+	 */
+	inline const T& front() const {
+
+		return _values[_index];
 	}
 
 	inline void fill(const T& value) {
@@ -39,7 +47,12 @@ public:
 		_sum = value*Size;
 	}
 
-	inline T average() {
+	inline T sum() const {
+
+		return _sum;
+	}
+
+	inline T average() const {
 
 		return _sum/Size;
 	}
@@ -53,6 +66,13 @@ private:
 
 static ring<uint32_t, RING_SIZE> ring_x;
 static ring<uint32_t, RING_SIZE> ring_y;
+
+template<typename Ring>
+inline uint32_t update_pos(Ring& ring, uint32_t value) {
+
+	ring.add(value);
+	return ring.average();
+}
 
 void filter(char* buf) {
 
@@ -68,7 +88,12 @@ void filter(char* buf) {
 
 	// type == 1 && code == 320 && value == 1 -> pen in
 	// type == 1 && code == 320 && value == 0 -> pen out
-	// type == 1 && code == 330 && value == 0 -> pen down(?)
+	// type == 1 && code == 321 && value == 1 -> eraser in
+	// type == 1 && code == 321 && value == 0 -> eraser out
+	//
+	// type == 1 && code == 330 && value == 1 -> pen/eraser down
+	// type == 1 && code == 330 && value == 0 -> pen/eraser up
+	//
 	// type == 3 && code == 0 -> value == x
 	// type == 3 && code == 1 -> value == y
 	// type == 3 && code == 24 -> value == pressure
@@ -76,8 +101,8 @@ void filter(char* buf) {
 	// type == 3 && code == 26 -> value == tilt x
 	// type == 3 && code == 27 -> value == tilt y
 
-	// pen in
-	if (type == 1 && code == 320 && value == 1) {
+	// pen/eraser in
+	if (type == 1 && ((code == 320 && value == 1) || (code == 321 && value == 1))) {
 
 		ring_x.clear();
 		ring_y.clear();
@@ -87,13 +112,11 @@ void filter(char* buf) {
 
 		if (code == 0) {
 
-			ring_x.add(value);
-			value = ring_x.average();
+			value = update_pos(ring_x, value);
 
 		} else if (code == 1) {
 
-			ring_y.add(value);
-			value = ring_y.average();
+			value = update_pos(ring_y, value);
 		}
 
 		// copy value back to buffer
