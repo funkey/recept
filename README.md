@@ -7,6 +7,14 @@ issue some users of the reMarkable 2 experience.
 
 ![before vs after](images/before_after.png)
 
+Disclaimer
+----------
+
+This is not an official reMarkable product, and I am in no way affiliated with
+reMarkable. I release this library in the hope that it is helpful to others. I
+can make no guarantee that it works as intended. There might be bugs leading to
+device crashes.
+
 Installation
 ------------
 
