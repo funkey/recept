@@ -13,6 +13,6 @@ echo
 read -p "Enter the hostname or IP address of your remarkable device [remarkable]:" remarkable
 remarkable=${remarkable:-remarkable}
 
-scp ./libintercept.so root@$remarkable:/usr/lib/
-ssh $remarkable "grep -qxF 'Environment=LD_PRELOAD=/usr/lib/libintercept.so' /lib/systemd/system/xochitl.service || sed -i 's#\[Service\]#[Service]\nEnvironment=LD_PRELOAD=/usr/lib/libintercept.so#' /lib/systemd/system/xochitl.service"
+scp ./librecept.so root@$remarkable:/usr/lib/
+ssh $remarkable "grep -qxF 'Environment=LD_PRELOAD=/usr/lib/librecept.so' /lib/systemd/system/xochitl.service || sed -i 's#\[Service\]#[Service]\nEnvironment=LD_PRELOAD=/usr/lib/librecept.so#' /lib/systemd/system/xochitl.service"
 ssh $remarkable "systemctl daemon-reload; systemctl restart xochitl"
