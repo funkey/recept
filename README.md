@@ -10,7 +10,18 @@ issue some users of the reMarkable 2 experience.
 Installation
 ------------
 
-Clone this repository and run `./install.sh`.
+You need access to a Linux machine to install the fix. On that machine:
+
+1. Connect your reMarkable 2 with the USB-C cable.
+2. Clone this repository, i.e., run `git clone https://github.com/funkey/recept` in a terminal.
+3. Change into the repository with `cd recept`.
+4. Run `./install.sh`.
+
+The install script will make several `ssh` connections to your device. For
+that, it needs to know the IP address or hostname of your device. If you
+haven't set up public key authentication before, it will also ask for a
+password. You can find both the IP address and password in "Settings" -> "Help"
+-> "Copyrights and licenses", at the bottom.
 
 How does it work?
 -----------------
