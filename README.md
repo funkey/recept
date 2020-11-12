@@ -31,9 +31,8 @@ haven't set up public key authentication before, it will also ask for a
 password. You can find both the IP address and password in "Settings" -> "Help"
 -> "Copyrights and licenses", at the bottom.
 
-If you want to uninstall the fix, simply remove the line containing
-`LD_PRELOAD` from `/lib/systemd/system/xochitl.service` on your device. Restart
-your device or run `systemctl daemon-reload; systemctl restart xochitl`.
+If you want to uninstall the fix, simply enter `0` when asked for the smoothing
+value in the install script.
 
 How does it work?
 -----------------
