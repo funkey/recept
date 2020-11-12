@@ -2,7 +2,9 @@
 #include <array>
 #include <limits>
 
+#ifndef RING_SIZE
 #define RING_SIZE 16
+#endif
 
 template<typename T, int Size>
 class ring {
