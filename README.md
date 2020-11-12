@@ -34,6 +34,19 @@ password. You can find both the IP address and password in "Settings" -> "Help"
 If you want to uninstall the fix, simply enter `0` when asked for the smoothing
 value in the install script.
 
+Will it increase the latency?
+-----------------------------
+
+In short, yes. The pen events themselves are not delayed (the filter itself
+consists only of a handful of integer operations, which are likely negligible).
+However, since we forward the average position of the past `N` events instead
+of the actual event, the reported position is somewhere close to the `N/2`-last
+event received. How much that actually increases latency depends on how fast
+events come in. As an example, if the pen sends 1000 events per second and the
+filter size `N` is 8, the mean will trail the actual pen position by around 4
+milliseconds. This calculation assumes isochronous events, which might not be
+the case.
+
 How does it work?
 -----------------
 
