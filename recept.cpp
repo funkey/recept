@@ -2,79 +2,102 @@
 #include <array>
 #include <limits>
 
-#ifndef RING_SIZE
-#define RING_SIZE 16
-#endif
+#define ARMA_DONT_USE_LAPACK
+#define ARMA_DONT_USE_BLAS
+#include <armadillo>
 
-template<typename T, int Size>
-class ring {
+using namespace arma;
+
+class kalman_filter {
 
 public:
 
-	inline void add(const T& value) {
+	typedef float T;
 
-		if (empty()) {
+	typedef Col<T> col;
+	typedef Mat<T> mat;
+	typedef col::fixed<2> vec_x;
+	typedef col::fixed<1> vec_z;
+	typedef mat::fixed<2, 2> mat_xx;
+	typedef mat::fixed<2, 1> mat_xz;
+	typedef mat::fixed<1, 2> mat_zx;
+	typedef mat::fixed<1, 1> mat_zz;
 
-			fill(value);
-			return;
+	kalman_filter(const T& sigma_x, const T& sigma_z) {
+
+		_I.eye();
+		_F = {
+			{1, 1},
+			{0, 1}
+		};
+		_H = {
+			{1, 0}
+		};
+		_Q = {
+			{0.25, 0.5},
+			{0.5, 1}
+		};
+		_Q *= sigma_x;
+		_R = sigma_z;
+
+		reset();
+	}
+
+	inline void reset() {
+
+		_x[1] = std::numeric_limits<T>::max();
+	}
+
+	inline T step(const T& z) {
+
+		if (_x[1] == std::numeric_limits<T>::max()) {
+
+			_x = {z, 0};
+			_P = {
+				{1.0, 0},
+				{0, 1.0}
+			};
+
+			return z;
 		}
 
-		_index = (_index + 1) % Size;
-		const T& oldest = _values[_index];
-		_sum = _sum + value - oldest;
-		_values[_index] = value;
-	}
+		// predict
+		_x = _F*_x;
+		_P = _F*_P*_F.t() + _Q;
 
-	inline void clear() {
+		// update
+		_K = _P*_H.t()*(_H*_P*_H.t() + _R).i();
+		_x = _x + _K*(z - _H*_x);
+		_P = (_I - _K*_H)*_P;
 
-		_sum = std::numeric_limits<T>::max();
-	}
-
-	inline bool empty() const {
-
-		return _sum == std::numeric_limits<T>::max();
-	}
-
-	/**
-	 * Return the last (i.e., newest) item added to the ring.
-	 */
-	inline const T& front() const {
-
-		return _values[_index];
-	}
-
-	inline void fill(const T& value) {
-
-		_values.fill(value);
-		_sum = value*Size;
-	}
-
-	inline T sum() const {
-
-		return _sum;
-	}
-
-	inline T average() const {
-
-		return _sum/Size;
+		return _x[0];
 	}
 
 private:
 
-	std::array<T, Size> _values;
-	uint8_t _index;
-	T _sum;
+	// state
+	vec_x _x;
+	// state covariance
+	mat_xx _P;
+
+	// state transition
+	mat_xx _F;
+	// measurement
+	mat_zx _H;
+	// covariance of process noise
+	mat_xx _Q;
+	// covariance of observation noise
+	mat_zz _R;
+
+	// identity matrix
+	mat_xx _I;
+	// Kalman gain
+	mat_xz _K;
 };
 
-static ring<uint32_t, RING_SIZE> ring_x;
-static ring<uint32_t, RING_SIZE> ring_y;
 
-template<typename Ring>
-inline uint32_t update_pos(Ring& ring, uint32_t value) {
-
-	ring.add(value);
-	return ring.average();
-}
+static kalman_filter kalman_x(0.01, 100.0);
+static kalman_filter kalman_y(0.01, 100.0);
 
 void filter(char* buf) {
 
@@ -106,19 +129,19 @@ void filter(char* buf) {
 	// pen/eraser in
 	if (type == 1 && ((code == 320 && value == 1) || (code == 321 && value == 1))) {
 
-		ring_x.clear();
-		ring_y.clear();
+		kalman_x.reset();
+		kalman_y.reset();
 	}
 
 	if (type == 3) {
 
 		if (code == 0) {
 
-			value = update_pos(ring_x, value);
+			value = (uint32_t)kalman_x.step((float)value);
 
 		} else if (code == 1) {
 
-			value = update_pos(ring_y, value);
+			value = (uint32_t)kalman_y.step((float)value);
 		}
 
 		// copy value back to buffer
