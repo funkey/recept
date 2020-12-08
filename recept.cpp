@@ -25,19 +25,11 @@ public:
 
 	kalman_filter(const T& sigma_x, const T& sigma_z) {
 
+		_sigma_x = sigma_x;
 		_I.eye();
-		_F = {
-			{1, 1},
-			{0, 1}
-		};
 		_H = {
 			{1, 0}
 		};
-		_Q = {
-			{0.25, 0.5},
-			{0.5, 1}
-		};
-		_Q *= sigma_x;
 		_R = sigma_z;
 
 		reset();
@@ -48,7 +40,7 @@ public:
 		_x[1] = std::numeric_limits<T>::max();
 	}
 
-	inline T step(const T& z) {
+	inline T step(const T& z, const uint32_t& delta_t_us) {
 
 		if (_x[1] == std::numeric_limits<T>::max()) {
 
@@ -60,6 +52,21 @@ public:
 
 			return z;
 		}
+
+		float delta_t_ms = ((float)delta_t_us)/1000.0;
+		float delta_t_ms_2 = delta_t_ms*delta_t_ms;
+		float delta_t_ms_3 = delta_t_ms_2*delta_t_ms;
+		float delta_t_ms_4 = delta_t_ms_3*delta_t_ms;
+
+		_Q = {
+			{0.25f*delta_t_ms_4, 0.5f*delta_t_ms_3},
+			{0.5f*delta_t_ms_3,       delta_t_ms_2}
+		};
+		_Q *= _sigma_x;
+		_F = {
+			{1, delta_t_ms},
+			{0, 1}
+		};
 
 		// predict
 		_x = _F*_x;
@@ -74,6 +81,8 @@ public:
 	}
 
 private:
+
+	float _sigma_x;
 
 	// state
 	vec_x _x;
@@ -99,7 +108,23 @@ private:
 static kalman_filter kalman_x(0.01, 100.0);
 static kalman_filter kalman_y(0.01, 100.0);
 
+static uint32_t prev_x_t = 0;
+static uint32_t prev_y_t = 0;
+
+static uint32_t x, y, pressure, distance, tilt_x, tilt_y = 0;
+
 void filter(char* buf) {
+
+	uint32_t t_s = (
+		(uint32_t)buf[0]       |
+		(uint32_t)buf[1] << 8  |
+		(uint32_t)buf[2] << 16 |
+		(uint32_t)buf[3] << 24);
+	uint32_t t_us = (
+		(uint32_t)buf[4]       |
+		(uint32_t)buf[5] << 8  |
+		(uint32_t)buf[6] << 16 |
+		(uint32_t)buf[7] << 24);
 
 	const uint8_t type = (uint8_t)buf[8];
 	const uint16_t code = (
@@ -133,15 +158,55 @@ void filter(char* buf) {
 		kalman_y.reset();
 	}
 
+	uint32_t delta_t;
+
 	if (type == 3) {
 
-		if (code == 0) {
+		switch (code) {
 
-			value = (uint32_t)kalman_x.step((float)value);
+			case 0:
 
-		} else if (code == 1) {
+				x = value;
 
-			value = (uint32_t)kalman_y.step((float)value);
+				if (t_us < prev_x_t)
+					delta_t = ((t_us + 1000000) - prev_x_t);
+				else
+					delta_t = (t_us - prev_x_t);
+				prev_x_t = t_us;
+
+				value = (uint32_t)kalman_x.step((float)value, delta_t);
+
+				break;
+
+			case 1:
+
+				y = value;
+
+				if (t_us < prev_y_t)
+					delta_t = ((t_us + 1000000) - prev_y_t);
+				else
+					delta_t = (t_us - prev_y_t);
+				prev_y_t = t_us;
+
+				value = (uint32_t)kalman_y.step((float)value, delta_t);
+
+				break;
+
+			case 24:
+				pressure = value;
+				break;
+
+			case 25:
+				distance = value;
+				break;
+
+			case 26:
+				tilt_x = value;
+				break;
+
+			case 27:
+				tilt_y = value;
+				break;
 		}
 
 		// copy value back to buffer
