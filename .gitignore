@@ -1,2 +1,4 @@
 *.sw[pmn]
 *.so
+*.pyc
+__pycache__
