@@ -19,4 +19,8 @@ compile:
 		-std=c++11 \
 		-O3 \
 		recept.cpp \
-		-o precompiled/librecept.so;
+		-o precompiled/librecept_kalman.so;
+
+install:
+	scp ./precompiled/librecept_kalman.so root@remarkable:/usr/lib/librecept.so
+	ssh root@remarkable "systemctl daemon-reload; systemctl restart xochitl"
