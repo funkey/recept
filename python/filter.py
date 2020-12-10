@@ -5,12 +5,10 @@ import numpy as np
 
 def moving_average(raw, window_size, center=True):
 
-    assert window_size % 2 == 1
-
     if center:
         origin = 0
     else:
-        origin = window_size//2
+        origin = window_size//2 - (1 - window_size % 2)
 
     return ndimage.uniform_filter(
         raw,
@@ -21,12 +19,10 @@ def moving_average(raw, window_size, center=True):
 
 def moving_median(raw, window_size, center=True):
 
-    assert window_size % 2 == 1
-
     if center:
         origin = 0
     else:
-        origin = window_size//2
+        origin = window_size//2 - (1 - window_size % 2)
 
     return ndimage.median_filter(
         raw,
