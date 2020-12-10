@@ -4,11 +4,17 @@ from numpy.linalg import inv
 
 class KalmanFilter:
 
-    def __init__(self, sigma_x, sigma_z, outlier_distance=None):
+    def __init__(
+            self,
+            sigma_x,
+            sigma_z=None,
+            outlier_distance=None,
+            std_z_window=16):
 
         self.sigma_x = sigma_x
         self.sigma_z = sigma_z
         self.outlier_distance = outlier_distance
+        self.std_z_window = std_z_window
         self.skip_limit = 10
         self.skipped = 0
         self.float_t = np.float32
@@ -23,6 +29,8 @@ class KalmanFilter:
                 [1, 0, 0]
             ], dtype=self.float_t)
         self.R = self.sigma_z
+
+        self.z_errors = []
 
     def reset(self):
 
@@ -57,8 +65,12 @@ class KalmanFilter:
         self.x = self.F@self.x
         self.P = self.F@self.P@self.F.T + self.Q
 
+
         # prepare update
         e = z - self.H@self.x
+        if self.sigma_z is None:
+            self.z_errors.append(e)
+            self.R = np.std(self.z_errors[-self.std_z_window:])**2
         Ree = self.H@self.P@self.H.T + self.R
 
         # compute Mahalanobis distance of z
