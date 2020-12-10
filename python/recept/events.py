@@ -8,8 +8,8 @@ class Events:
     def __init__(self, df):
 
         self.time = np.array(df['time'], dtype=np.int64)
-        self.x = df['x']
-        self.y = df['y']
+        self.x = np.array(df['x'])
+        self.y = np.array(df['y'])
         self.pressure = df['pressure']
         if 'distance' in df:
             self.distance = df['distance']

@@ -60,7 +60,7 @@ def kalman_1d(time, raw, sigma_x, sigma_z, outlier_distance=None):
     return ret[:, 0], ret[:, 1]  # , ret[:, 2]
 
 
-def kalman_filter(events, sigma_x, sigma_z, outlier_distance=None):
+def kalman_filter(events, sigma_x, sigma_z, outlier_distance=None, only_x=False):
 
     kalman_filtered = events.copy()
 
@@ -69,10 +69,11 @@ def kalman_filter(events, sigma_x, sigma_z, outlier_distance=None):
         kalman_filtered.x,
         sigma_x, sigma_z,
         outlier_distance)
-    kalman_filtered.y, kalman_filtered.speed_y = kalman_1d(
-        kalman_filtered.time,
-        kalman_filtered.y,
-        sigma_x, sigma_z)
+    if not only_x:
+        kalman_filtered.y, kalman_filtered.speed_y = kalman_1d(
+            kalman_filtered.time,
+            kalman_filtered.y,
+            sigma_x, sigma_z)
 
     return kalman_filtered
 
