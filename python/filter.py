@@ -75,3 +75,26 @@ def kalman_filter(events, sigma_x, sigma_z, outlier_distance=None):
         sigma_x, sigma_z)
 
     return kalman_filtered
+
+
+def adaptive_smooth(events, sigma_x, sigma_z):
+
+    def speed_to_window_size(speed):
+        return max(1, 16 - int(abs(speed)*10))
+
+    smoothed = {
+        window_size: smooth(events, 0, window_size, center=False)
+        for window_size in range(1, 17)
+    }
+
+    filtered = kalman_filter(events, sigma_x, sigma_z)
+
+    for t in range(len(filtered.time)):
+        speed_x = filtered.speed_x[t]
+        speed_y = filtered.speed_y[t]
+        window_size_x = speed_to_window_size(speed_x)
+        window_size_y = speed_to_window_size(speed_y)
+        filtered.x[t] = smoothed[window_size_x].x[t]
+        filtered.y[t] = smoothed[window_size_y].y[t]
+
+    return filtered
