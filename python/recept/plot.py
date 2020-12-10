@@ -27,7 +27,7 @@ def plot_events(*events_list):
     plt.show()
 
 
-def plot_matches(events_a, events_b, matches):
+def plot_matches(events_a, events_b, matches, show_events=None):
 
     a_to_b = matches.indices
     distances = matches.distances
@@ -37,6 +37,9 @@ def plot_matches(events_a, events_b, matches):
     match_y = events_b.y[a_to_b] - events_a.y
     same_time_x = events_b.x - events_a.x
     same_time_y = events_b.y - events_a.y
+
+    if show_events is not None:
+        plt.scatter(show_events.y, show_events.x, color='red', alpha=0.5)
 
     plt.scatter(events_a.y, events_a.x, c=latencies, s=distances*10)
     plt.plot(events_a.y, events_a.x)

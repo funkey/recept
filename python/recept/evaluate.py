@@ -2,7 +2,7 @@ from .plot import plot_matches
 from .match import match
 
 
-def evaluate(filtered, gold_standard, show_plot=False):
+def evaluate(filtered, gold_standard, show_plot=False, show_events=None):
 
     matches = match(filtered, gold_standard)
 
@@ -13,6 +13,6 @@ def evaluate(filtered, gold_standard, show_plot=False):
     print()
 
     if show_plot:
-        plot_matches(filtered, gold_standard, matches)
+        plot_matches(filtered, gold_standard, matches, show_events)
 
     return matches.mean_distance(), matches.mean_latency()
