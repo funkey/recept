@@ -15,11 +15,12 @@ class KalmanFilter:
 
         self.x = None
         self.eye = np.array([
-                [1, 0],
-                [0, 1]
+                [1, 0, 0],
+                [0, 1, 0],
+                [0, 0, 1]
             ], dtype=self.float_t)
         self.H = np.array([
-                [1, 0]
+                [1, 0, 0]
             ], dtype=self.float_t)
         self.R = self.sigma_z
 
@@ -31,27 +32,25 @@ class KalmanFilter:
 
         if self.x is None:
 
-            self.x = np.array([z, 0], dtype=self.float_t)
+            self.x = np.array([z, 0, 0], dtype=self.float_t)
             self.P = np.array([
-                    [1.0, 0],
-                    [0, 1.0]
+                    [1.0, 0.0, 0.0],
+                    [0.0, 1.0, 0.0],
+                    [0.0, 0.0, 1.0]
                 ], dtype=self.float_t)
 
             return np.array([z, 0, 0], dtype=self.float_t)
 
         delta_t_ms = delta_t_us/1000.0
         delta_t_ms_2 = delta_t_ms*delta_t_ms
-        delta_t_ms_3 = delta_t_ms_2*delta_t_ms
-        delta_t_ms_4 = delta_t_ms_3*delta_t_ms
 
-        self.Q = np.array([
-                [0.25*delta_t_ms_4, 0.5*delta_t_ms_3],
-                [0.5*delta_t_ms_3,      delta_t_ms_2]
-            ], dtype=self.float_t)
+        G = np.array([0.5*delta_t_ms_2, delta_t_ms, 1.0], dtype=self.float_t)
+        self.Q = np.outer(G, G)
         self.Q *= self.sigma_x
         self.F = np.array([
-                [1, delta_t_ms],
-                [0, 1]
+                [1, delta_t_ms, 0.5*delta_t_ms_2],
+                [0, 1,          delta_t_ms],
+                [0, 0,          1]
             ], dtype=self.float_t)
 
         # predict
