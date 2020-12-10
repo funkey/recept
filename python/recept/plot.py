@@ -42,7 +42,7 @@ def plot_matches(events_a, events_b, matches, show_events=None):
         plt.scatter(show_events.y, show_events.x, color='red', alpha=0.5)
 
     plt.scatter(events_a.y, events_a.x, c=latencies, s=distances*10)
-    plt.plot(events_a.y, events_a.x)
+    plt.plot(events_a.y, events_a.x, color='purple')
     plt.quiver(
         events_a.y, events_a.x,
         same_time_y, same_time_x,
@@ -56,7 +56,7 @@ def plot_matches(events_a, events_b, matches, show_events=None):
         color='black',
         width=0.002)
 
-    plt.scatter(events_b.y, events_b.x)
-    plt.plot(events_b.y, events_b.x)
+    plt.scatter(events_b.y, events_b.x, color='orange')
+    plt.plot(events_b.y, events_b.x, color='orange')
 
     plt.show()
