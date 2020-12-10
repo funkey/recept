@@ -17,6 +17,19 @@ class Events:
         self.tilt_y = df['tilt_y']
         self.speed_x = None
         self.speed_y = None
+        self.acceleration_x = None
+        self.acceleration_y = None
+
+    def compute_speed_acceleration(self):
+
+        self.speed_x = np.concatenate([[0], self.x[1:] - self.x[:-1]])
+        self.speed_y = np.concatenate([[0], self.y[1:] - self.y[:-1]])
+        self.acceleration_x = np.concatenate([
+            [0],
+            self.speed_x[1:] - self.speed_x[:-1]])
+        self.acceleration_y = np.concatenate([
+            [0],
+            self.speed_y[1:] - self.speed_y[:-1]])
 
     @property
     def has_speed(self):
