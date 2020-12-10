@@ -1,4 +1,4 @@
-from kalman_filter import KalmanFilter
+from .kalman_filter import KalmanFilter
 from scipy import ndimage
 import numpy as np
 

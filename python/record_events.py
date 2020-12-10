@@ -1,6 +1,4 @@
 import asyncio
-import os
-import subprocess
 
 
 async def listen(rm_host):

@@ -1,5 +1,5 @@
-from plot import plot_matches
-from match import match
+from .plot import plot_matches
+from .match import match
 
 
 def evaluate(filtered, gold_standard, show_plot=False):

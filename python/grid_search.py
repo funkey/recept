@@ -1,6 +1,4 @@
-from evaluate import evaluate
-from events import read_events
-from filter import smooth, kalman_filter
+from recept import evaluate, read_events, smooth, kalman_filter
 import numpy as np
 import sys
 
