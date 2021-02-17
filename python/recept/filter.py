@@ -1,6 +1,7 @@
 from .kalman_filter import KalmanFilter
 from scipy import ndimage
 import numpy as np
+import torch
 
 
 def moving_average(raw, window_size, center=True):
@@ -45,6 +46,37 @@ def smooth(events, median_window_size, mean_window_size, center=True):
 
     return smoothed
 
+
+def moving_model(raw, model, input_size):
+
+    # repeat first raw value input_size times
+    xraw = np.concatenate([[raw[0]]*input_size, raw])
+
+    X = np.array([
+        xraw[i:i + input_size].astype(np.float32)
+        for i in range(len(xraw) - input_size)
+    ])
+
+    # normalize data
+    mean = np.mean(X, axis=1)
+    for i in range(input_size):
+        X[:,i] = X[:,i] - mean
+
+    X = torch.from_numpy(X)
+    Y = model(X).detach().numpy().flatten()
+
+    # de-normalize output
+    Y = Y + mean
+
+    return Y
+
+def model_filter(events, model, input_size):
+
+    filtered = events.copy()
+
+    filtered.x = moving_model(filtered.x, model, input_size)
+
+    return filtered
 
 def kalman_1d(time, raw, sigma_x, sigma_z, outlier_distance=None):
 
