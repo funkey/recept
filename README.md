@@ -55,3 +55,27 @@ How does it work?
 running on the tablet), `librecept` remembers the file handle. Subsequent
 `read`s from this handle are transparently filtered with a moving average of
 size 16 by default.
+
+Building
+--------
+
+To build for both devices run the following:
+
+```bash
+source /opt/codex/rm10x/3.1.15/environment-setup-cortexa9hf-neon-remarkable-linux-gnueabi
+make
+```
+
+To only build for rM1 run the following:
+
+```bash
+source /opt/codex/rm10x/3.1.15/environment-setup-cortexa9hf-neon-remarkable-linux-gnueabi
+make rm1
+```
+
+To only build for rM1 run the following:
+
+```bash
+source /opt/codex/rm10x/3.1.15/environment-setup-cortexa9hf-neon-remarkable-linux-gnueabi
+make rm2
+```
