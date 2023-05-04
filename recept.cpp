@@ -5,6 +5,12 @@
 #ifndef RING_SIZE
 #define RING_SIZE 16
 #endif
+#ifndef INPUT_DEVICE
+#define _INPUT_DEVICE "/dev/input/event1"
+#else
+#define toString(_arg) #_arg
+#define _INPUT_DEVICE toString(INPUT_DEVICE)
+#endif
 
 template<typename T, int Size>
 class ring {
@@ -152,7 +158,7 @@ int open(const char* filename, int flags) {
 
 	int fd = real_open(filename, flags);
 
-	if (strcmp(filename, "/dev/input/event1") == 0) {
+	if (strcmp(filename, _INPUT_DEVICE) == 0) {
 
 		printf(">| someone is trying to open event1, let's remember the fd!\n");
 		printf(">| (psssst: it is %d)\n", fd);

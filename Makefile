@@ -1,26 +1,41 @@
-default: compile
+default: rm2 rm1
 
-compile:
-	! mkdir precompiled
-	. /usr/local/oecore-x86_64/environment-setup-cortexa9hf-neon-oe-linux-gnueabi; \
+rm2:
+	mkdir -p build/rm2
 	for rs in `seq 2 32`; \
 	do \
-		arm-oe-linux-gnueabi-g++ \
-			-DRING_SIZE=$$rs \
-			-march=armv7-a \
-			-mfpu=neon \
-			-mfloat-abi=hard \
-			-mcpu=cortex-a9 \
-			--sysroot=/usr/local/oecore-x86_64/sysroots/cortexa9hf-neon-oe-linux-gnueabi \
-			-Wall \
-			-shared \
-			-ldl \
-			-fPIC \
-			-O3 \
-			recept.cpp \
-			-o precompiled/librecept_rs$$rs.so; \
+	  $(CXX) \
+	      $(CXXFLAGS)\
+	      -DRING_SIZE=$$rs \
+	      -DINPUT_DEVICE=/dev/input/event1 \
+	      -Wall \
+	      -shared \
+	      -ldl \
+	      -fPIC \
+	      recept.cpp \
+	      -o build/rm2/librecept_rs$$rs.so; \
 	done
 
-test:
-	scp precompiled/librecept_rs16.so root@remarkable:librecept.so
+rm1:
+	mkdir -p build/rm1
+	for rs in `seq 2 32`; \
+	do \
+	  $(CXX) \
+	      $(CXXFLAGS)\
+	      -DRING_SIZE=$$rs \
+	      -DINPUT_DEVICE=/dev/input/event0 \
+	      -Wall \
+	      -shared \
+	      -ldl \
+	      -fPIC \
+	      recept.cpp \
+	      -o build/rm1/librecept_rs$$rs.so; \
+	done
+
+test-rm1:
+	scp build/rm1/librecept_rs32.so root@remarkable:librecept.so
+	ssh remarkable "LD_PRELOAD=/home/root/librecept.so ls"
+
+test-rm2:
+	scp build/rm2/librecept_rs16.so root@remarkable:librecept.so
 	ssh remarkable "LD_PRELOAD=/home/root/librecept.so ls"
